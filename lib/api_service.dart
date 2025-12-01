@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:path_provider/path_provider.dart';
+import 'models/file_item.dart'; // 👈 记得引入刚才建的模型
+import 'dart:convert';
 
 class ApiService {
   // 单例模式：确保全局只使用一个网络实例和 Cookie 管理器
@@ -162,6 +164,46 @@ class ApiService {
       }
     } catch (e) {
       debugPrint('❌ 上传失败: $e');
+      rethrow;
+    }
+  }
+
+  // --- 新增：获取文件列表 ---
+  // 👇👇👇 新增的方法 👇👇👇
+  Future<List<FileItem>> fetchFileList() async {
+    try {
+      debugPrint('📥 正在获取文件列表...');
+
+      final response = await _dio.get(
+        '/index.php?mod=explorer&op=explorerfile&do=filelist&sid=f-$containerId',
+      );
+
+      // 解析 JSON
+      Map<String, dynamic> jsonResponse;
+      if (response.data is String) {
+        jsonResponse = jsonDecode(response.data);
+      } else {
+        jsonResponse = response.data;
+      }
+
+      // 提取 data 字段
+      // 注意：API 返回的 data 是一个 Map，key 是 id，value 是文件信息
+      var dataObj = jsonResponse['data'];
+
+      if (dataObj == null || dataObj is! Map) {
+        return []; // 没有文件
+      }
+
+      List<FileItem> fileList = [];
+      // 遍历 Map 的 values
+      for (var item in dataObj.values) {
+        fileList.add(FileItem.fromJson(item, baseUrl));
+      }
+      fileList.sort((a, b) => b.date.compareTo(a.date));
+      debugPrint('✅ 获取到 ${fileList.length} 个文件');
+      return fileList;
+    } catch (e) {
+      debugPrint('❌ 获取文件列表失败: $e');
       rethrow;
     }
   }

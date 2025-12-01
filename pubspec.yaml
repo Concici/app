@@ -47,6 +47,8 @@ dependencies:
   permission_handler: ^11.3.0
   # 安全存储库
   flutter_secure_storage: ^9.0.0
+  # ... 其他依赖
+  url_launcher: ^6.2.2 # 👈 新增/确保此行存在
   
 
 dev_dependencies:
